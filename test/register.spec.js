@@ -54,4 +54,42 @@ describe('Register', function () {
       })
     })
   })
+
+  it.skip('Register nested plugin with options', (done) => {
+    const server = new Hapi.Server()
+    server.connection()
+    server.register({
+      register: HapiHemera,
+      options: {
+        nats: 'nats://localhost:6242',
+        plugins: [{
+          register: require(''),
+          options: {}
+        }]
+      }
+    }, (err) => {
+      expect(err).to.not.exist()
+      expect(server.hemera).to.exist()
+
+      server.hemera.add({
+        topic: 'math',
+        cmd: 'add'
+      }, (args, next) => {
+        next(null, args.a + args.b)
+      })
+
+      server.hemera.act({
+        topic: 'math',
+        cmd: 'add',
+        a: 1,
+        b: 2,
+        timeout$: 5000
+      }, (err, resp) => {
+        expect(err).to.not.exist()
+        expect(resp).to.exist()
+        done()
+      })
+    })
+  })
+
 })
